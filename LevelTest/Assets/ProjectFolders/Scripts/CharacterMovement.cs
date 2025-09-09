@@ -5,14 +5,58 @@ using UnityEngine;
 public class CharacterMovement : MonoBehaviour
 {
     // Start is called before the first frame update
+    Rigidbody rigidbody;
+    float horizInput;
+    float vertInput;
+    float rotationSpeed;
+   
+   
+    [Header("Movement Settings")]
+    public float maxSpeed = 5;
+    public float accelerateTime = 0.2f;
+    public float decelerateTime = 20f;
+    public float rotateSpeed = 3;
+    Vector3 velocity;
+    Quaternion currentRotation;
+   
+    public Transform playerOrientation;
+    
     void Start()
     {
-        
+        rigidbody = GetComponent<Rigidbody>();
+        rigidbody.freezeRotation = true;
+    
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        horizInput = Input.GetAxis("Horizontal");
+        vertInput = Input.GetAxis("Vertical");
+    }
+    void PlayerMovement()
+    {
+        if(vertInput!=0)
+        {
+            velocity.z += vertInput * Time.deltaTime;
+
+        }
+        if(horizInput!=0)
+        {
+            velocity.x += horizInput * Time.deltaTime;
+           // velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
+        }
+        if (horizInput==0 && vertInput==0)
+        {
+           
+           velocity.x = Mathf.MoveTowards(velocity.x, 0, decelerateTime * Time.fixedDeltaTime);
+       
+            velocity.z = Mathf.MoveTowards(velocity.z,0, decelerateTime* Time.fixedDeltaTime);
+        }
+    }
+    private void FixedUpdate()
+    {
+        PlayerMovement();
+        rigidbody.velocity= new Vector3(velocity.x, velocity.y, velocity.z) * maxSpeed;
     }
 }
