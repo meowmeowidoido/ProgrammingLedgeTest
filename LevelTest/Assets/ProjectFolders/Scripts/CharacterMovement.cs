@@ -9,8 +9,8 @@ public class CharacterMovement : MonoBehaviour
     float horizInput;
     float vertInput;
     float rotationSpeed;
-   
-   
+
+    public Transform playerOrientation;
     [Header("Movement Settings")]
     public float maxSpeed = 5;
     public float accelerateTime = 0.2f;
@@ -18,8 +18,9 @@ public class CharacterMovement : MonoBehaviour
     public float rotateSpeed = 3;
     Vector3 velocity;
     Quaternion currentRotation;
-   
-    public Transform playerOrientation;
+    [Header("Jump Settings")]
+    bool grounded;
+    
     
     void Start()
     {
@@ -48,15 +49,17 @@ public class CharacterMovement : MonoBehaviour
         }
         if (horizInput==0 && vertInput==0)
         {
+            //rigidbody.linearVelocity = new Vector3 (velocity.x , 0 , velocity.z);
+        
            
-           velocity.x = Mathf.MoveTowards(velocity.x, 0, decelerateTime * Time.fixedDeltaTime);
+          // velocity.x = Mathf.MoveTowards(velocity.x, 0, (decelerateTime*2) * Time.fixedDeltaTime);
        
-            velocity.z = Mathf.MoveTowards(velocity.z,0, decelerateTime* Time.fixedDeltaTime);
+         //   velocity.z = Mathf.MoveTowards(velocity.z,0, (decelerateTime* 2)*Time.fixedDeltaTime);
         }
     }
     private void FixedUpdate()
     {
         PlayerMovement();
-        rigidbody.velocity= new Vector3(velocity.x, velocity.y, velocity.z) * maxSpeed;
+        rigidbody.linearVelocity= new Vector3(velocity.x, velocity.y, velocity.z) * maxSpeed;
     }
 }
