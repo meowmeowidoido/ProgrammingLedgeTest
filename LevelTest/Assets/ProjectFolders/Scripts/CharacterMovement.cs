@@ -163,8 +163,8 @@ public class CharacterMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.Q))
         {
             rigidbody.freezeRotation = true;
-            rigidbody.useGravity = true;
             Debug.Log("input");
+            currentMovement = MovementType.running;
             timeToReGrab = 0;
             isGrabbing = false;
             lockedOn = false;
@@ -185,7 +185,6 @@ public class CharacterMovement : MonoBehaviour
             rigidbody.constraints = RigidbodyConstraints.None;
             //JumpUpdate is used to bring the play down with the gravity, 
 
-          //JumpUpdate();
 
         }
 
@@ -270,6 +269,7 @@ public class CharacterMovement : MonoBehaviour
         }
         else
         {
+            currentMovement = MovementType.running;
             isGrabbing = false;
             lockedOn = false;
         }
@@ -291,8 +291,9 @@ public class CharacterMovement : MonoBehaviour
             rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, lookLedge * rigidbody.transform.rotation, ledgeSpeed));       
           //rigidbody.constraints = RigidbodyConstraints.FreezePositionY;
             rigidbody.freezeRotation = true;
-    
+            
         }
+ 
     }
 
 }
