@@ -260,9 +260,10 @@ MonoBehaviour:
   grabDistance: 2.4
   ledgeCheckOffSet: 1.74
   ledgeCheck:
-    serializedVersion: 2
     m_Bits: 128
   ledgeSpeed: 0.51
+  currentLedge: {x: 0, y: 0, z: 0}
+  ledgeDistance: 0
   characterController: {fileID: 97723054}
   playerCamera: {fileID: 820260455}
 --- !u!1 &463088231
