@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class ClimbingController : MonoBehaviour
 {
+
+    public enum movementType  {
+        climbing,
+        running
+    }
     [Header("Ledge Grabbing Settings")]
     public bool isGrabbing;
     public float grabDistance;

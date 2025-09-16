@@ -11,7 +11,7 @@ public class PlayerCamera3D : MonoBehaviour
 
     public Transform objPlayer;
     public Transform orientation;
-
+    public CharacterMovement player;
     void Start()
     {
        
@@ -22,7 +22,14 @@ public class PlayerCamera3D : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (player.lockedOn == false)
+        {
+            Direction3DCamera();
+        }
+        
+    }
+    private void Direction3DCamera()
+    {
         horizInput = Input.GetAxis("Horizontal");
         vertInput = Input.GetAxis("Vertical");
         Vector3 camDirection = rb.position - new Vector3(transform.position.x, rb.position.y, transform.position.z);
