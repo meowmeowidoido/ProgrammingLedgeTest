@@ -1,4 +1,4 @@
-using NUnit.Framework.Constraints;
+﻿using NUnit.Framework.Constraints;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -152,11 +152,22 @@ public class CharacterMovement : MonoBehaviour
   
   private void ClimbingMovement()
     {
-        velocity.x = CalculatePlayerMovement(playerDirection.z, velocity.z);
-        rigidbody.linearVelocity = new Vector3(velocity.x,0, playerDirection.z);
+
+        Vector3 climbAxis;
+        Vector3 absoluteDirection = new Vector3(Mathf.Abs(currentLedge.x), 0, Mathf.Abs(currentLedge.z));
+        if( absoluteDirection.x > absoluteDirection.z )
+        {
+            climbAxis = Vector3.right *  playerDirection.x; 
+        }
+        else
+        {
+            climbAxis = Vector3.forward *  playerDirection.z;
+        }
+
+        rigidbody.linearVelocity = new Vector3(climbAxis.x, 0, climbAxis.z );
         if (Input.GetKey(KeyCode.Space))
         {
-            rigidbody.linearVelocity = new Vector3(velocity.x, velocity.y, playerDirection.z);
+            rigidbody.linearVelocity = new Vector3(climbAxis.x , velocity.y, climbAxis.z );
 
         }
         rigidbody.freezeRotation = true;
@@ -262,7 +273,7 @@ public class CharacterMovement : MonoBehaviour
         if (isGrabbing = Physics.Raycast(transform.position, rigidbody.transform.forward, out ledgeHit, grabDistance, ledgeCheck.value))
         {
             lockedOn = true;
-            currentLedge = ledgeHit.transform.position;
+            currentLedge = ledgeHit.transform.forward;
             ledgeDistance = Vector3.Distance(currentLedge, rigidbody.position);
             currentMovement = MovementType.climbing;
             ActivateClimbingFreeze();
@@ -279,17 +290,21 @@ public class CharacterMovement : MonoBehaviour
     {
         if (isGrabbing)
         {
-            Quaternion lookLedge = Quaternion.LookRotation(ledgeHit.transform.forward);
+            Quaternion lookLedge = Quaternion.LookRotation(ledgeHit.transform.right + ledgeHit.transform.forward);
             Debug.Log("Climbing");
             if (ledgeDistance > 1.5)
             {
-                rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, lookLedge * rigidbody.transform.rotation, ledgeSpeed));
-                rigidbody.linearVelocity += (currentLedge - rigidbody.position)  ;
-                
+                // rigidbody.MoveRotation(Quaternion.Slerp(lookLedge, lookLedge , ledgeSpeed));
+                rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, rigidbody.rotation, ledgeSpeed));
+                rigidbody.linearVelocity = (currentLedge + rigidbody.transform.forward);
 
-            }       
-            rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, lookLedge * rigidbody.transform.rotation, ledgeSpeed));       
-          //rigidbody.constraints = RigidbodyConstraints.FreezePositionY;
+
+            }
+
+            rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, rigidbody.rotation  , ledgeSpeed));
+            //rigidbody.constraints = RigidbodyConstraints.FreezePositionY;
+            rigidbody.linearVelocity = (currentLedge + rigidbody.transform.forward);
+
             rigidbody.freezeRotation = true;
             
         }
