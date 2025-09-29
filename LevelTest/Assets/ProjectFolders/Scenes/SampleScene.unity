@@ -199,7 +199,7 @@ MonoBehaviour:
   rigidbody: {fileID: 0}
   maxSpeed: 2
   accelerateTime: 0.49
-  decelerateTime: 8.11
+  decelerateTime: 0.5
   playerInput: {x: 0, y: 0, z: 0}
   velocity: {x: 0, y: 0, z: 0}
   inputDirection: {x: 0, y: 0, z: 0}
@@ -213,6 +213,12 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   camera: {fileID: 963194228}
+  tightRope:
+    serializedVersion: 2
+    m_Bits: 512
+  onHPole: 0
+  detectDistance: 0.52
+  poleRadius: 0.29
   currentMovement: 0
   isGrabbing: 0
   grabDistance: 2.11
@@ -945,7 +951,7 @@ GameObject:
   - component: {fileID: 765249171}
   - component: {fileID: 765249170}
   - component: {fileID: 765249169}
-  m_Layer: 7
+  m_Layer: 9
   m_Name: Ledges (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

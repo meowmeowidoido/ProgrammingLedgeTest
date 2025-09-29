@@ -36,10 +36,24 @@ public class CharacterMovement : MonoBehaviour
     public LayerMask groundCheckMask;
     public Transform camera;
 
+    [Header("Tightrope Movement Settings")]
+    float playerSpeed;
+    float balanceMeter;
+    float maxBalance;
+    float recoverySpeed;
+    float playerTiltAngle;
+    [Header("Tight Rope Detection")]
+    public LayerMask tightRope;
+    public bool onHPole;
+    RaycastHit poleHit;
+    public float detectDistance=0.5f;
+    public float poleRadius=0.5f;
+
     public enum MovementType
     {
         running,
-        climbing
+        climbing,
+        tightrope
         
     }
     public MovementType currentMovement;
@@ -74,7 +88,9 @@ public class CharacterMovement : MonoBehaviour
         Debug.Log(timeToReGrab);
         PlayerInputs();
         CameraFacing();
+        checkForPole();
         CheckForGround();
+       
         if (timeToReGrab< 0.6f )
         {
             timeToReGrab += Time.deltaTime;
@@ -144,6 +160,9 @@ public class CharacterMovement : MonoBehaviour
 
                 ClimbingMovement();
               
+                break;
+            case MovementType.tightrope:
+              TightRopeWalk();
                 break;
         }
     }
@@ -280,7 +299,7 @@ public class CharacterMovement : MonoBehaviour
         }
         else
         {
-            currentMovement = MovementType.running;
+            
             isGrabbing = false;
             lockedOn = false;
         }
@@ -310,6 +329,45 @@ public class CharacterMovement : MonoBehaviour
         }
  
     }
+    private void checkForPole()
+    {
+        onHPole = Physics.SphereCast(rigidbody.position, poleRadius, Vector3.down, out poleHit, detectDistance, tightRope);
+        if (onHPole)
+        {
+            currentMovement = MovementType.tightrope;
+        }
+        else
+        {
+            currentMovement = MovementType.running;
+        }
+    }
+
+    private void TightRopeWalk()
+    {
+        Vector3 walkAxis;
+        Vector3 absoluteDirection = new Vector3(Mathf.Abs(poleHit.transform.position.x), 0, Mathf.Abs(poleHit.transform.position.x));
+        if (absoluteDirection.x > absoluteDirection.z)
+        {
+            walkAxis = Vector3.right * playerDirection.x;
+        }
+        else
+        {
+            walkAxis = Vector3.forward * playerDirection.z;
+        }
+        float xClamp = Mathf.Clamp(rigidbody.position.x, poleHit.collider.bounds.min.x, poleHit.collider.bounds.max.x);
+        float zClamp = Mathf.Clamp(rigidbody.position.z, poleHit.collider.bounds.min.z, poleHit.collider.bounds.max.z);
+     
+        rigidbody.linearVelocity = new Vector3(walkAxis.x, 0, walkAxis.z);
+        rigidbody.position = new Vector3(xClamp, rigidbody.position.y, zClamp);
+
+    }
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = new Color(233f, 33f, 333f, 100f);
+        Gizmos.DrawSphere(transform.position + Vector3.down, poleRadius);
+
+    }
+
 
 }
 
