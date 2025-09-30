@@ -12,6 +12,7 @@ public class PlayerCamera3D : MonoBehaviour
     public Transform objPlayer;
     public Transform orientation;
     public CharacterMovement player;
+    public Quaternion directionToRotate;
     void Start()
     {
        
@@ -35,12 +36,12 @@ public class PlayerCamera3D : MonoBehaviour
         Vector3 camDirection = rb.position - new Vector3(transform.position.x, rb.position.y, transform.position.z);
         orientation.forward = camDirection.normalized;
         Vector3 inputDirection = orientation.forward * vertInput + orientation.right * horizInput;
-        Quaternion directionToRotate = Quaternion.LookRotation(inputDirection);
+         directionToRotate = Quaternion.LookRotation(inputDirection);
 
         if (inputDirection != Vector3.zero)
         {
             rb.MoveRotation(Quaternion.Slerp(rb.rotation, directionToRotate, rotationSpeed * Time.deltaTime));
-
+            
         }
     }
 }

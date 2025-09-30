@@ -37,24 +37,31 @@ public class CharacterMovement : MonoBehaviour
     public Transform camera;
 
     [Header("Tightrope Movement Settings")]
-    float playerSpeed;
-    float balanceMeter;
+    public float tightRopeSpeed = 0.5f;
     float maxBalance;
-    float recoverySpeed;
-    float playerTiltAngle;
+   public float recoverySpeed = 2f;
+    public float tiltSpeed = 60f;
+    float playerTiltAngle = 0;
+
+    float tightRopeAccelTime = 1f;
+    float tightRopeAcceleration;
     [Header("Tight Rope Detection")]
     public LayerMask tightRope;
     public bool onHPole;
     RaycastHit poleHit;
-    public float detectDistance=0.5f;
-    public float poleRadius=0.5f;
+    public float detectDistance = 0.5f;
+    public float poleRadius = 0.5f;
+    bool directionChosen;
+    float tiltDirection;
+    bool completelyTilted = false;
 
+    public PlayerCamera3D playerCamera;
     public enum MovementType
     {
         running,
         climbing,
         tightrope
-        
+
     }
     public MovementType currentMovement;
 
@@ -70,16 +77,17 @@ public class CharacterMovement : MonoBehaviour
     public bool lockedOn;
     float timeToReGrab = 1;
     public bool ledgeJumpActive;
-    
+
     void Start()
     {
         rigidbody = GetComponent<Rigidbody>();
         rigidbody.freezeRotation = true;
         acceleration = maxSpeed / accelerateTime;
         deceleration = maxSpeed / decelerateTime;
+        tightRopeAcceleration = tiltSpeed / tightRopeAccelTime;
         gravity = -2 * apexHeight / (Mathf.Pow(apexTime, 2));
         initialJumpSpeed = 2 * apexHeight / apexTime;
-        
+
     }
 
     // Update is called once per frame
@@ -90,19 +98,18 @@ public class CharacterMovement : MonoBehaviour
         CameraFacing();
         checkForPole();
         CheckForGround();
-       
-        if (timeToReGrab< 0.6f )
+
+        if (timeToReGrab < 0.6f)
         {
             timeToReGrab += Time.deltaTime;
         }
-        if (timeToReGrab >=0.6f)
+        if (timeToReGrab >= 0.6f)
         {
-            rigidbody.freezeRotation = true;
             CheckLedge();
             timeToReGrab = 1;
         }
-        }
-        private void PlayerInputs()
+    }
+    private void PlayerInputs()
     {
         horizInput = Input.GetAxisRaw("Horizontal");
         vertInput = Input.GetAxisRaw("Vertical");
@@ -122,7 +129,7 @@ public class CharacterMovement : MonoBehaviour
         velocity.x = CalculatePlayerMovement(playerDir.x, velocity.x);
         velocity.z = CalculatePlayerMovement(playerDir.z, velocity.z);
 
-    
+
         rigidbody.linearVelocity = new Vector3(velocity.x, velocity.y, velocity.z);
     }
 
@@ -146,47 +153,51 @@ public class CharacterMovement : MonoBehaviour
         }
         return velocity;
     }
-   
+
     public void HandleMovement()
     {
 
         switch (currentMovement) {
             case MovementType.running:
                 PlayerMovement(playerDirection);
+                completelyTilted = false;
                 JumpUpdate();
                 break;
             case MovementType.climbing:
                 JumpUpdate();
 
                 ClimbingMovement();
-              
+
                 break;
             case MovementType.tightrope:
-              TightRopeWalk();
+                TightRopeWalk();
+              
+             
+
                 break;
         }
     }
-   
 
-  
-  private void ClimbingMovement()
+
+
+    private void ClimbingMovement()
     {
 
         Vector3 climbAxis;
         Vector3 absoluteDirection = new Vector3(Mathf.Abs(currentLedge.x), 0, Mathf.Abs(currentLedge.z));
-        if( absoluteDirection.x > absoluteDirection.z )
+        if (absoluteDirection.x > absoluteDirection.z)
         {
-            climbAxis = Vector3.right *  playerDirection.x; 
+            climbAxis = Vector3.right * playerDirection.x;
         }
         else
         {
-            climbAxis = Vector3.forward *  playerDirection.z;
+            climbAxis = Vector3.forward * playerDirection.z;
         }
 
-        rigidbody.linearVelocity = new Vector3(climbAxis.x, 0, climbAxis.z );
+        rigidbody.linearVelocity = new Vector3(climbAxis.x, 0, climbAxis.z);
         if (Input.GetKey(KeyCode.Space))
         {
-            rigidbody.linearVelocity = new Vector3(climbAxis.x , velocity.y, climbAxis.z );
+            rigidbody.linearVelocity = new Vector3(climbAxis.x, velocity.y, climbAxis.z);
 
         }
         rigidbody.freezeRotation = true;
@@ -198,17 +209,17 @@ public class CharacterMovement : MonoBehaviour
             timeToReGrab = 0;
             isGrabbing = false;
             lockedOn = false;
-           // rigidbody.constraints = RigidbodyConstraints.None;
-           //JumpUpdate is used to bring the play down with the gravity,thought i figured it out and it isnt working so!
+            // rigidbody.constraints = RigidbodyConstraints.None;
+            //JumpUpdate is used to bring the play down with the gravity,thought i figured it out and it isnt working so!
             JumpUpdate();
 
-      
+
 
 
         }
         if (isGrabbing == false)
         {
-            
+
 
             lockedOn = false;
             rigidbody.useGravity = true;
@@ -222,24 +233,24 @@ public class CharacterMovement : MonoBehaviour
         {
             rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
             //gravity from the actual rigidbody turns false 
-          //rigidbody.useGravity = false;
+            //rigidbody.useGravity = false;
             currentMovement = MovementType.running;
         }
     }
 
 
 
-        public void CameraFacing()
-    { 
-            //camera directions change with input depending on where the players camera is facing
-            //the cameras forward position is multiplied with the Z axis of the player input. forward and backwards movement
-            Vector3 cameraForward = camera.transform.forward * playerInput.z;
-            Vector3 cameraRight = camera.transform.right * playerInput.x;
-            //avoids instances where the player goes up when facing their camera up
-            cameraForward.y = 0;
-            cameraRight.y = 0;
-            playerDirection = (cameraForward + cameraRight).normalized;
-        
+    public void CameraFacing()
+    {
+        //camera directions change with input depending on where the players camera is facing
+        //the cameras forward position is multiplied with the Z axis of the player input. forward and backwards movement
+        Vector3 cameraForward = camera.transform.forward * playerInput.z;
+        Vector3 cameraRight = camera.transform.right * playerInput.x;
+        //avoids instances where the player goes up when facing their camera up
+        cameraForward.y = 0;
+        cameraRight.y = 0;
+        playerDirection = (cameraForward + cameraRight).normalized;
+
     }
     private void CheckForGround()
     {
@@ -249,34 +260,35 @@ public class CharacterMovement : MonoBehaviour
     }
     private void JumpUpdate()
     {
-        if (!isGrounded || lockedOn==false)
-        {
-            
-            velocity.y += gravity * Time.fixedDeltaTime;
-        }
-        if(isGrounded || lockedOn==true)
+        if (!isGrounded || lockedOn == false)
         {
 
-           
+            velocity.y += gravity * Time.fixedDeltaTime;
+        }
+        if (isGrounded || lockedOn == true)
+        {
+
+          
             velocity.y = -0.1f;
             velocity.y = Mathf.Max(velocity.y, -200);
 
             if (currentMovement == MovementType.climbing)
             {
+               
                 rigidbody.constraints = RigidbodyConstraints.None;
                 rigidbody.useGravity = false;
 
                 rigidbody.freezeRotation = true;
                 timeToReGrab = 1;
             }
-            
-               
-              
-            
 
-         }
 
-       if ((isGrounded || lockedOn==true) && Input.GetKey(KeyCode.Space)) 
+
+
+
+        }
+
+        if ((isGrounded || lockedOn == true) && Input.GetKey(KeyCode.Space))
         {
             Debug.Log("Jump!");
             velocity.y = initialJumpSpeed;
@@ -299,11 +311,11 @@ public class CharacterMovement : MonoBehaviour
         }
         else
         {
-            
+
             isGrabbing = false;
             lockedOn = false;
         }
-   
+
     }
     private void ActivateClimbingFreeze()
     {
@@ -320,50 +332,142 @@ public class CharacterMovement : MonoBehaviour
 
             }
 
-            rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, rigidbody.rotation  , ledgeSpeed));
+            rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, rigidbody.rotation, ledgeSpeed));
             //rigidbody.constraints = RigidbodyConstraints.FreezePositionY;
             rigidbody.linearVelocity = (currentLedge + rigidbody.transform.forward);
 
             rigidbody.freezeRotation = true;
-            
+
         }
- 
+
     }
     private void checkForPole()
     {
-        onHPole = Physics.SphereCast(rigidbody.position, poleRadius, Vector3.down, out poleHit, detectDistance, tightRope);
-        if (onHPole)
+        if (completelyTilted == false)
+        {
+            onHPole = Physics.SphereCast(rigidbody.position, poleRadius, Vector3.down, out poleHit, detectDistance, tightRope);
+        }
+        if (onHPole && completelyTilted ==false)
         {
             currentMovement = MovementType.tightrope;
         }
         else
         {
             currentMovement = MovementType.running;
+           
+            rigidbody.freezeRotation = true;
+            playerTiltAngle = 0;
         }
     }
 
     private void TightRopeWalk()
     {
+        
+        rigidbody.constraints = RigidbodyConstraints.FreezeRotationX;
         Vector3 walkAxis;
-        Vector3 absoluteDirection = new Vector3(Mathf.Abs(poleHit.transform.position.x), 0, Mathf.Abs(poleHit.transform.position.x));
-        if (absoluteDirection.x > absoluteDirection.z)
+        Vector3 absoluteDirection = new Vector3(Mathf.Abs(poleHit.transform.position.x), 0, Mathf.Abs(poleHit.transform.position.z));
+
+        walkAxis = Vector3.right * playerDirection.x;
+
+
+        walkAxis += Vector3.forward * playerDirection.z;
+
+        float xClamp = Mathf.Clamp(rigidbody.position.x, poleHit.collider.bounds.min.x, poleHit.collider.bounds.max.x);
+        float zClamp = Mathf.Clamp(rigidbody.position.z, poleHit.collider.bounds.min.z, poleHit.collider.bounds.max.z);
+
+        rigidbody.position = new Vector3(xClamp, rigidbody.position.y, zClamp);
+
+
+        velocity.y = initialJumpSpeed;
+        PlayerImbalancing(walkAxis);
+
+        if (Input.GetKey(KeyCode.Space))
         {
-            walkAxis = Vector3.right * playerDirection.x;
+            rigidbody.linearVelocity = new Vector3(walkAxis.x, velocity.y, walkAxis.z);
+
+
+        }
+        
+            
+        
+
+    }
+    private void PlayerImbalancing(Vector3 walkAxis)
+    {
+        rigidbody.constraints = RigidbodyConstraints.FreezeRotationX;
+
+        if (Random.value < 0.5f && directionChosen == false)
+        {
+            directionChosen = true;
+            tiltDirection = -1;
+            Debug.Log(tiltDirection + " : VER: -1");
+        }
+        if (Random.value > 0.5f && directionChosen == false)
+        {
+            directionChosen = true;
+            tiltDirection = 1;
+            Debug.Log(tiltDirection + " : VER: 1");
+        }
+
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S))
+        {
+
+
+            playerTiltAngle += tiltDirection * Time.deltaTime * tightRopeAcceleration;
+
         }
         else
         {
-            walkAxis = Vector3.forward * playerDirection.z;
-        }
-        float xClamp = Mathf.Clamp(rigidbody.position.x, poleHit.collider.bounds.min.x, poleHit.collider.bounds.max.x);
-        float zClamp = Mathf.Clamp(rigidbody.position.z, poleHit.collider.bounds.min.z, poleHit.collider.bounds.max.z);
-     
-        rigidbody.linearVelocity = new Vector3(walkAxis.x, 0, walkAxis.z);
-        rigidbody.position = new Vector3(xClamp, rigidbody.position.y, zClamp);
+            if (playerTiltAngle < 0)
+            {
+                playerTiltAngle += Time.deltaTime * recoverySpeed;
 
+            }
+            if (playerTiltAngle > 0)
+            {
+                playerTiltAngle -= Time.deltaTime * recoverySpeed;
+
+
+            }
+
+            directionChosen = false;
+        }
+
+        //Player has to press Q and E to rebalance themselfs
+        /*  if (Input.GetKey(KeyCode.Q))
+          {
+              playerTiltAngle += Time.deltaTime * recoverySpeed;
+              directionChosen = false;
+          }
+          if (Input.GetKey(KeyCode.E))
+          {
+              playerTiltAngle -= Time.deltaTime * recoverySpeed;
+              directionChosen = false;
+          }*/
+        Quaternion tilt = Quaternion.AngleAxis(playerTiltAngle, Vector3.forward);
+        Quaternion finalRotation = tilt * playerCamera.directionToRotate;
+        rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, finalRotation, playerCamera.rotationSpeed * Time.deltaTime));
+
+
+        rigidbody.linearVelocity = new Vector3(walkAxis.x, 0, walkAxis.z) * tightRopeSpeed * Time.deltaTime;
+        if (playerTiltAngle > 40)
+        {
+            rigidbody.constraints = RigidbodyConstraints.None;
+            rigidbody.linearVelocity = Vector3.right * 5;
+            completelyTilted = true;
+        }
+        if (playerTiltAngle < -40)
+        {
+            rigidbody.constraints = RigidbodyConstraints.None;
+            rigidbody.linearVelocity = Vector3.left * 5;
+
+            completelyTilted = true;
+            
+        }
     }
     private void OnDrawGizmos()
     {
-        Gizmos.color = new Color(233f, 33f, 333f, 100f);
+        Gizmos.color = new Color(233f, 33f, 333f, 5f);
         Gizmos.DrawSphere(transform.position + Vector3.down, poleRadius);
 
     }
