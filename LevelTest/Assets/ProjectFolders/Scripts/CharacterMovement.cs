@@ -444,6 +444,8 @@ public class CharacterMovement : MonoBehaviour
               playerTiltAngle -= Time.deltaTime * recoverySpeed;
               directionChosen = false;
           }*/
+
+        //combining both tilting rotation with the camera player direction rotation 
         Quaternion tilt = Quaternion.AngleAxis(playerTiltAngle, Vector3.forward);
         Quaternion finalRotation = tilt * playerCamera.directionToRotate;
         rigidbody.MoveRotation(Quaternion.Slerp(rigidbody.rotation, finalRotation, playerCamera.rotationSpeed * Time.deltaTime));
